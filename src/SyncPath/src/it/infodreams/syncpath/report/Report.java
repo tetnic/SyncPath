@@ -107,7 +107,7 @@ public class Report {
     
     public final List<ReportItem> items = new ArrayList<>();
  
-    private Report() {
+    public Report() {
         
     }
    
@@ -123,7 +123,7 @@ public class Report {
         File directory = new File(path);         
         
         if (!directory.isDirectory()) ErrorManager.getInstance().error("Directory '" + path + "' is not a valid directory to scan.", ErrorManager.ErrorLevel.SEVERE);        
-        
+
         ReportItem newparent = new ReportItem((parent != null ? parent : null), directory.getName(), ReportItem.ItemType.Directory);        
         
         for (File file : directory.listFiles()) {

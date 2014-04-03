@@ -41,7 +41,6 @@ public final class ReportItem implements Serializable {
     private ItemSyncStatus status;
     private long lastModifiedTime;
     private long size;
-    private long md5;
     
     public ReportItem() {        
     }
@@ -52,14 +51,17 @@ public final class ReportItem implements Serializable {
         setType(type);
         setSyncStatus(ItemSyncStatus.Added);
         
-        String filename = getPath() + (type == ItemType.File ? name : "");
+        if (type != ItemType.Directory) {
+            String filename = getPath(true) + (type == ItemType.File ? name : "");       
+            File file = new File(filename);
         
-        File file = new File(filename);
-
-        lastModifiedTime = file.lastModified();
-        size = file.length();
+            if (!file.exists()) ErrorManager.getInstance().error("File \'" +  filename + "\' doesn't exist.", ErrorManager.ErrorLevel.SEVERE);
         
-        System.out.println((type == ItemType.File ? "File :" : "Directory :") + name + " => " + getPath());         
+            lastModifiedTime = file.lastModified();
+            size = file.length();                
+        }
+        
+        System.out.println((type == ItemType.File ? "File :" : "Directory :") + name + " => " + getPath(true));                 
     }
     
     public void setParent(ReportItem parent) {
@@ -112,15 +114,17 @@ public final class ReportItem implements Serializable {
                item.getName().equals(name);        
     }
     
-    public String getPath() {
+    public String getPath(boolean reportRoot) {
         List<String> pathItems = new ArrayList<>();
         ReportItem item = this;
         
         do {
-            pathItems.add(0, item.getName());
+            if (item.getType() != ItemType.File) pathItems.add(0, item.getName());
             item = item.getParent();
             if (item == null) break;
         } while (true);
+        
+        if (!reportRoot) pathItems.remove(0);
         
         StringBuilder path = new StringBuilder();        
         for (String element : pathItems) {

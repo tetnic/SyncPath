@@ -21,7 +21,7 @@ public class ErrorManager {
     public static final ErrorManager getInstance() { return instance; }
     
     public void error(String message, ErrorLevel level) {
-        System.out.print((level == ErrorLevel.SEVERE ? "Severe " : "") + "Error : " + message);
+        System.out.println((level == ErrorLevel.SEVERE ? "Severe " : "") + "Error : " + message);
         if (level == ErrorLevel.SEVERE) System.exit(-1);
     }
 }

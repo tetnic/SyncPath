@@ -6,6 +6,7 @@
 
 package it.infodreams.syncpath;
 
+import it.infodreams.syncpath.packager.Packager;
 import it.infodreams.syncpath.report.Report;
 import java.io.FileNotFoundException;
 import java.util.logging.Level;
@@ -20,12 +21,10 @@ public class SyncPath {
     /**
      * @param args the command line arguments
      */
-    public static void main(String[] args) {
-        Report report = Report.createReport("build");
-        
+    public static void main(String[] args) {  
         try {
-            report.saveToFile("Report.xml");
-            Report readReport = Report.loadFromFile("Report.xml");
+            Packager packager = new Packager();
+            packager.packFiles("./nbproject", "./package");
             int i = 0;
         } catch (FileNotFoundException ex) {
             Logger.getLogger(SyncPath.class.getName()).log(Level.SEVERE, null, ex);
