@@ -37,6 +37,10 @@ public final class ReportItem implements Serializable {
     private ReportItem parent;
     private String name;
     private ItemType type;
+    private ItemSyncStatus status;
+    private long lastModifiedTime;
+    private long size;
+    private long md5;
     
     public ReportItem() {        
     }
@@ -45,6 +49,14 @@ public final class ReportItem implements Serializable {
         setParent(parent);
         setName(name);
         setType(type);
+        setSyncStatus(ItemSyncStatus.Added);
+        
+        File file = new File(getPath() + (type == ItemType.File ? name : ""));
+        if (file == null) throw new IllegalArgumentException();
+        
+        lastModifiedTime = file.lastModified();
+        size = file.length();
+        
         System.out.println((type == ItemType.File ? "File :" : "Directory :") + name + " => " + getPath());         
     }
     
@@ -66,11 +78,24 @@ public final class ReportItem implements Serializable {
         this.type = type;
     }
     
+    public void setSyncStatus(ItemSyncStatus status) {
+        this.status = status;
+    }
+    
+    public void setLastModified(long time) { 
+        lastModifiedTime = time;
+    }
+    
+    public void setSize(long size) { 
+        this.size = size; 
+    }    
+    
     public ReportItem getParent() { return parent; }
     public String getName() { return name; }
     public ItemType getType() { return type; }
-    
-    private ItemSyncStatus status;
+    public ItemSyncStatus getSyncStatus() { return status; }
+    public long getLastModified() { return lastModifiedTime; }
+    public long getSize() { return size; }
     
     public ItemSyncStatus getItemStatus() { return status; }
     protected void setItemStatus(ItemSyncStatus status) { this.status = status; }
