@@ -4,8 +4,9 @@
  * and open the template in the editor.
  */
 
-package it.infodreams.syncpath.application.report;
+package it.infodreams.syncpath.report;
 
+import it.infodreams.syncpath.services.ErrorManager;
 import java.beans.XMLDecoder;
 import java.beans.XMLEncoder;
 import java.io.BufferedInputStream;
@@ -26,11 +27,14 @@ public class Report {
     public static Report loadFromFile(String filename) throws FileNotFoundException {
         if (filename == null) throw new IllegalArgumentException();
         
+        File file = new File(filename);
+        if (!file.isFile()) ErrorManager.getInstance().error("File '" + filename + "' is not a valid report file.", ErrorManager.ErrorLevel.SEVERE);
+        
         Report report;
         try (XMLDecoder decoder = new XMLDecoder( new BufferedInputStream( new FileInputStream(filename) ) )) {
             report = new Report();
             report.items.addAll((List<ReportItem>) decoder.readObject());        
-        }
+        } 
         
         return report;
     }
@@ -101,7 +105,7 @@ public class Report {
         return report;
     }    
     
-    private final List<ReportItem> items = new ArrayList<>();
+    public final List<ReportItem> items = new ArrayList<>();
  
     private Report() {
         
@@ -116,8 +120,9 @@ public class Report {
     }
     
     public void scanDirectory(String path, ReportItem parent) {
-        File directory = new File(path);              
-        if (!directory.isDirectory()) throw new IllegalArgumentException();
+        File directory = new File(path);         
+        
+        if (!directory.isDirectory()) ErrorManager.getInstance().error("Directory '" + path + "' is not a valid directory to scan.", ErrorManager.ErrorLevel.SEVERE);        
         
         ReportItem newparent = new ReportItem((parent != null ? parent : null), directory.getName(), ReportItem.ItemType.Directory);        
         
@@ -126,9 +131,6 @@ public class Report {
             items.add(item);
             
             if (file.isDirectory()) scanDirectory(file.getAbsolutePath(), newparent);            
-            else {
-               
-            }
         }
     }   
     

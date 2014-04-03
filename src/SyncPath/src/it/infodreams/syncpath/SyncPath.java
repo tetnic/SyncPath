@@ -6,7 +6,7 @@
 
 package it.infodreams.syncpath;
 
-import it.infodreams.syncpath.application.report.Report;
+import it.infodreams.syncpath.report.Report;
 import java.io.FileNotFoundException;
 import java.util.logging.Level;
 import java.util.logging.Logger;

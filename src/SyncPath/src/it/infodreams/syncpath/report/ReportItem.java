@@ -4,8 +4,9 @@
  * and open the template in the editor.
  */
 
-package it.infodreams.syncpath.application.report;
+package it.infodreams.syncpath.report;
 
+import it.infodreams.syncpath.services.ErrorManager;
 import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -51,9 +52,10 @@ public final class ReportItem implements Serializable {
         setType(type);
         setSyncStatus(ItemSyncStatus.Added);
         
-        File file = new File(getPath() + (type == ItemType.File ? name : ""));
-        if (file == null) throw new IllegalArgumentException();
+        String filename = getPath() + (type == ItemType.File ? name : "");
         
+        File file = new File(filename);
+
         lastModifiedTime = file.lastModified();
         size = file.length();
         
