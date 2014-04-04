@@ -7,7 +7,6 @@
 package it.infodreams.syncpath;
 
 import it.infodreams.syncpath.packager.Packager;
-import it.infodreams.syncpath.report.Report;
 import java.io.FileNotFoundException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -22,13 +21,8 @@ public class SyncPath {
      * @param args the command line arguments
      */
     public static void main(String[] args) {  
-        try {
-            Packager packager = new Packager();
-            packager.packFiles("./nbproject", "./package");
-            int i = 0;
-        } catch (FileNotFoundException ex) {
-            Logger.getLogger(SyncPath.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        Packager packager = new Packager();
+        packager.scanPath("./mageia4", "Mageia4Report.xml");
     }
     
 }

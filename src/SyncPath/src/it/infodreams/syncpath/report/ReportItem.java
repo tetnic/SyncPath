@@ -61,7 +61,7 @@ public final class ReportItem implements Serializable {
             size = file.length();                
         }
         
-        System.out.println((type == ItemType.File ? "File :" : "Directory :") + name + " => " + getPath(true));                 
+        System.out.println((type == ItemType.File ? "File : " : "Directory : ") + name + " => " + getPath(true));                 
     }
     
     public void setParent(ReportItem parent) {

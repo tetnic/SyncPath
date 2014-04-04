@@ -21,6 +21,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import static java.nio.file.StandardCopyOption.COPY_ATTRIBUTES;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -35,6 +37,18 @@ public class Packager {
     
     public void setPackageSplitSize(long size) { packageSplitSize = size; }
     public long getPackageSplitSize() { return packageSplitSize; }
+    
+    public void scanPath(String path, String reportFileName) {
+        if (path == null) throw new IllegalArgumentException();
+        if (reportFileName == null) throw new IllegalArgumentException();
+        
+        Report report = Report.createReport(path);
+        try {
+            report.saveToFile(reportFileName);
+        } catch (FileNotFoundException ex) {
+            ErrorManager.getInstance().error(ex.getMessage(), ErrorManager.ErrorLevel.SEVERE);
+        }
+    }
     
     public void packFiles(String sourcePath, String destPath) throws FileNotFoundException {
         if (sourcePath == null) throw new IllegalArgumentException();
@@ -124,7 +138,8 @@ public class Packager {
                 } catch (IOException ex) {
                     ErrorManager.getInstance().error(ex.getMessage(), ErrorManager.ErrorLevel.NOT_SEVERE);
                 }
-                splitReport.saveToFile(destReportPath + File.separator + "____Report.xml");                                
+                
+                splitReport.saveToFile(destReportPath + File.separator + "____Report_" + splitDirName + ".xml");                                
                 splitReport.items.clear();                
             }                     
             
@@ -140,7 +155,7 @@ public class Packager {
                 } catch (IOException ex) {
                     ErrorManager.getInstance().error(ex.getMessage(), ErrorManager.ErrorLevel.NOT_SEVERE);
                 }
-                splitReport.saveToFile(destReportPath + File.separator + "____Report.xml");        
+                splitReport.saveToFile(destReportPath + File.separator + "____Report_" + splitDirName + ".xml");        
     }
     
     public void unpackFiles(String sourcePath, String destPath) {
