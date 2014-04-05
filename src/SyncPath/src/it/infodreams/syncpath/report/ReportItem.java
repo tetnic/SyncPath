@@ -8,9 +8,15 @@ package it.infodreams.syncpath.report;
 
 import it.infodreams.syncpath.services.ErrorManager;
 import java.io.File;
+import java.io.IOException;
 import java.io.Serializable;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -45,24 +51,30 @@ public final class ReportItem implements Serializable {
     public ReportItem() {        
     }
     
-    public ReportItem(ReportItem parent, String name, ItemType type) {        
+    public ReportItem(ReportItem parent, String name, ItemType type, String path) {                           
         setParent(parent);
         setName(name);
         setType(type);
         setSyncStatus(ItemSyncStatus.Added);
         
         if (type != ItemType.Directory) {
-            String filename = getPath(true) + (type == ItemType.File ? name : "");       
-            File file = new File(filename);
+            String filename = path + File.separator + (type == ItemType.File ? name : "");       
+            Path file = new File(filename).toPath();
+            
+            BasicFileAttributes attr = null;
+            try {
+                attr = Files.readAttributes(file, BasicFileAttributes.class);
+            } catch (IOException ex) {
+                ErrorManager.getInstance().error(ex.getMessage(), ErrorManager.ErrorLevel.NOT_SEVERE);
+                return;
+            }
         
-            if (!file.exists()) ErrorManager.getInstance().error("File \'" +  filename + "\' doesn't exist.", ErrorManager.ErrorLevel.SEVERE);
-        
-            lastModifiedTime = file.lastModified();
-            size = file.length();                
-        }
-        
-        System.out.println((type == ItemType.File ? "File : " : "Directory : ") + name + " => " + getPath(true));                 
+            lastModifiedTime = attr.lastModifiedTime().toMillis();
+            size = attr.size();
+        }      
+//        System.out.println("[" + counter++ + "] " + (type == ItemType.File ? "File : " : "Directory : ") + name + " => " + getPath(true));                 
     }
+static long counter = 0;    
     
     public void setParent(ReportItem parent) {
         if (parent != null && parent.getType() != ItemType.Directory) throw new IllegalArgumentException();  
@@ -110,7 +122,7 @@ public final class ReportItem implements Serializable {
      */
     public boolean isSame(ReportItem item) {
         if (item == null) throw new IllegalArgumentException();
-        return item.getType() != type &&
+        return item.getType() == type &&
                item.getName().equals(name);        
     }
     
