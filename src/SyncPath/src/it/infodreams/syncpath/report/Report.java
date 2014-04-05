@@ -19,7 +19,9 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  *
@@ -54,53 +56,60 @@ public class Report {
          * the fact that directories have little differences, the resulting
          * throughput is quite acceptable.
          */
-        List<ReportItem> sourceItems = new ArrayList<>(source.items);
-        List<ReportItem> destItems = new ArrayList<>(destination.items);
-        
         List<ReportItem> addedItems = new ArrayList<>();
         List<ReportItem> modifiedItems = new ArrayList<>();
         List<ReportItem> removedItems = new ArrayList<>();
         
-        HashMap<String, ReportItem> hashedReport = new HashMap<>();        
-        for (int destIndex = 0; destIndex < destItems.size(); destIndex++) {
-            ReportItem dstItem = destItems.get(destIndex);            
+        HashMap<String, ReportItem> hashedDestReport = new HashMap<>();        
+        HashMap<String, ReportItem> hashedSourceReport = new HashMap<>();
+        
+        for (int destIndex = 0; destIndex < destination.items.size(); destIndex++) {
+            ReportItem dstItem = destination.items.get(destIndex);            
             
             if (dstItem.getType() == ItemType.Directory) continue;
-            
+                        
             String key = dstItem.getPath(true) + dstItem.getName();
-            hashedReport.put(key, dstItem);
+            hashedDestReport.put(key, dstItem);
         }
         
-        for (int srcIndex = 0; srcIndex < sourceItems.size(); srcIndex++) {
-            ReportItem srcItem = sourceItems.get(srcIndex);   
+        for (int destIndex = 0; destIndex < source.items.size(); destIndex++) {
+            ReportItem dstItem = source.items.get(destIndex);            
             
-            if (srcItem.getType() == ItemType.Directory) continue;
-            
-            String fileName = srcItem.getPath(true) +  srcItem.getName();
-            ReportItem dstItem = hashedReport.get(fileName);
+            if (dstItem.getType() == ItemType.Directory) continue;
+                        
+            String key = dstItem.getPath(true) + dstItem.getName();
+            hashedSourceReport.put(key, dstItem);
+        }
+        
+        Set<String> keySet = new HashSet<>(hashedSourceReport.keySet());
+        
+        for (String srcItemKey : keySet) {              
+            ReportItem srcItem = hashedSourceReport.get(srcItemKey);
+            ReportItem dstItem = hashedDestReport.get(srcItemKey);
                         
             if (dstItem != null) {
                 // Check if it's modified
                 if (srcItem.getLastModified() != dstItem.getLastModified() ||
-                    srcItem.getSize() != dstItem.getSize()) {
+                    srcItem.getSize() != dstItem.getSize() ||
+                    ((srcItem.getMD5() != null &&
+                     dstItem.getMD5() != null) && (!srcItem.getMD5().equals(dstItem.getMD5())))) {
                     modifiedItems.add(srcItem);
                     srcItem.setItemStatus(ReportItem.ItemSyncStatus.Modified);
 
-                    LogManager.getInstance().log("Modified file found : " + srcItem.getPath(true) + srcItem.getName(), LogManager.LOG_LEVEL_2);                        
+                    LogManager.getInstance().log("Modified file found : " + srcItemKey, LogManager.LOG_LEVEL_2);                        
                 }
 
                 // Remove items from source lists so at the end of
                 // the process will be simple to identify added and 
                 // removed items
-                sourceItems.remove(srcIndex);
-                hashedReport.remove(fileName);
-                break;
+                hashedSourceReport.remove(srcItemKey);
+                hashedDestReport.remove(srcItemKey);
             }
-        }
+        }                
         
         // Copy every remaining source items into the 'added items' array
         // and set items status as Added
-        for (ReportItem item : sourceItems) {
+        for (ReportItem item : hashedSourceReport.values()) {                       
             addedItems.add(item); 
             item.setItemStatus(ReportItem.ItemSyncStatus.Added);
             
@@ -109,7 +118,7 @@ public class Report {
         
         // Copy every remaining dest items into the 'deleted items' array
         // and set items status as Deleted
-        for (ReportItem item : hashedReport.values()) {
+        for (ReportItem item : hashedDestReport.values()) {            
             removedItems.add(item);
             item.setItemStatus(ReportItem.ItemSyncStatus.Deleted);
             
@@ -117,7 +126,7 @@ public class Report {
         }
         
         /*
-         * Now we have every info to generate the final report
+         * Now we have all info to generate the final report
          */
         Report finalReport = new Report();
         finalReport.items.addAll(addedItems);

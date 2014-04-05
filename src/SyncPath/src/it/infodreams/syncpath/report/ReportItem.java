@@ -8,11 +8,18 @@ package it.infodreams.syncpath.report;
 
 import it.infodreams.syncpath.services.ErrorManager;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -47,6 +54,7 @@ public final class ReportItem implements Serializable {
     private ItemSyncStatus status;
     private long lastModifiedTime;
     private long size;
+    private String md5;
     
     public ReportItem() {        
     }
@@ -71,10 +79,45 @@ public final class ReportItem implements Serializable {
         
             lastModifiedTime = attr.lastModifiedTime().toMillis();
             size = attr.size();
+            
+            try {
+                md5 = getMD5Checksum(filename);
+            } catch (Exception ex) {
+                ErrorManager.getInstance().error(ex.getMessage(), ErrorManager.ErrorLevel.NOT_SEVERE);               
+                md5 = null;
+            } 
         }      
-//        System.out.println("[" + counter++ + "] " + (type == ItemType.File ? "File : " : "Directory : ") + name + " => " + getPath(true));                 
     }
-static long counter = 0;    
+    
+    private byte[] createChecksum(String filename) throws Exception {
+        InputStream fis =  new FileInputStream(filename);
+
+        byte[] buffer = new byte[1024];
+        MessageDigest complete = MessageDigest.getInstance("MD5");
+        int numRead;
+
+        do {
+            numRead = fis.read(buffer);
+            if (numRead > 0) {
+                complete.update(buffer, 0, numRead);
+            }
+        } while (numRead != -1);
+
+        fis.close();
+        
+        return complete.digest();
+    }
+
+    private String getMD5Checksum(String filename) throws Exception {
+        byte[] b = createChecksum(filename);
+        String result = "";
+
+        for (int i=0; i < b.length; i++) {
+            result += Integer.toString( ( b[i] & 0xff ) + 0x100, 16).substring( 1 );
+        }
+       
+        return result;
+    }    
     
     public void setParent(ReportItem parent) {
         if (parent != null && parent.getType() != ItemType.Directory) throw new IllegalArgumentException();  
@@ -106,12 +149,15 @@ static long counter = 0;
         this.size = size; 
     }    
     
+    public void setMD5(String md5) { this.md5 = md5; }
+    
     public ReportItem getParent() { return parent; }
     public String getName() { return name; }
     public ItemType getType() { return type; }
     public ItemSyncStatus getSyncStatus() { return status; }
     public long getLastModified() { return lastModifiedTime; }
     public long getSize() { return size; }
+    public String getMD5() { return md5; }
     
     public ItemSyncStatus getItemStatus() { return status; }
     protected void setItemStatus(ItemSyncStatus status) { this.status = status; }
